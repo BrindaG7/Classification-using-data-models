@@ -1,0 +1,100 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import nltk
+import matplotlib.pyplot as plt
+import re
+from nltk.corpus import stopwords
+from nltk.stem.porter import PorterStemmer
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import confusion_matrix
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
+
+nltk.download('stopwords')
+corpus = [ ]
+dataset=pd.read_csv('C://brinda G//IDS//DATA.csv')
+
+print('0--> Negative \n1--> Positive')
+pd.set_option('display.max_colwidth',150)
+print(dataset.head( ))
+
+# Preprocessing
+for i in range(0, 1000):
+    review = re.sub('[^a-zA-Z]',' ', dataset['Review'][i])
+    review = review.lower()
+    review = review.split()
+    ps = PorterStemmer()
+    review = [ps.stem(word) for word in review if not word in set(stopwords.words('english'))]
+    review = ' '.join(review)
+    corpus.append(review)
+
+# Creating the Bag of Words model
+cv = CountVectorizer(max_features = 1500)
+X = cv.fit_transform(corpus).toarray()
+y = dataset.iloc[:, 1].values
+
+#Splitting the dataset into the training set and test set
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.20, random_state = 0)
+print(dataset.head())
+
+#Naive Bayes
+NB_classifier = GaussianNB()
+NB_classifier.fit(X_train, y_train)
+y_pred_NB = NB_classifier.predict(X_test)
+
+#Support Vector
+SVC_classifier = SVC (kernel = 'rbf')
+SVC_classifier.fit(X_train, y_train)
+y_pred_SVC = SVC_classifier.predict(X_test)
+
+#Random Forest
+rf_classifier = RandomForestClassifier(n_estimators = 10, criterion = 'entropy', random_state = 0)
+rf_classifier.fit(X_train, y_train)
+y_pred_rf = rf_classifier.predict(X_test)
+
+#Confusion Matrices
+cm_NB = confusion_matrix(y_test, y_pred_NB)
+cm_SVC = confusion_matrix(y_test, y_pred_SVC)
+cm_RandFor = confusion_matrix(y_test, y_pred_rf)
+
+#CAP Analysis
+total = len(y_test)
+one_count = np.sum(y_test)
+zero_count = total - one_count
+cm_NB = [y for _, y in sorted(zip(y_pred_NB, y_test), reverse = True)]
+cm_SVC = [y for _, y in sorted(zip (y_pred_SVC, y_test), reverse=True)]
+cm_RandFor = [y for _, y in sorted(zip (y_pred_SVC, y_test), reverse=True)]
+
+x= np.arange(0, total + 1)
+y_NB = np.append([0], np.cumsum(cm_NB))
+y_SVC = np.append([0], np.cumsum(cm_SVC))
+y_RandFor = np.append([0], np.cumsum(cm_RandFor))
+
+plt.figure(figsize = (10, 10))
+plt.title('CAP Curve Analysis')
+
+plt.plot([0, total], [0, one_count], c = 'k', linestyle = '--', label = 'Random Model')
+plt.plot([0, one_count, total], [0, one_count, one_count], c = 'grey', linewidth = 2, label = 'Perfect Model')
+
+plt.plot(x, y_NB, c = 'b', label = 'Naive Bayes', linewidth = 2)
+plt.plot(x, y_SVC, c = 'r', label = 'SVC', linewidth=2)
+plt.plot(x, y_RandFor, c = 'g', label = 'Random Forest', linewidth=2)
+
+plt.legend()
+
+from sklearn.metrics import accuracy_score
+
+# Calculate accuracy of Naive Bayes model
+acc_NB = accuracy_score(y_test, y_pred_NB)
+print("Accuracy of Naive Bayes model:", acc_NB)
+
+# Calculate accuracy of Support Vector model
+acc_SVC = accuracy_score(y_test, y_pred_SVC)
+print("Accuracy of Support Vector model:", acc_SVC)
+
+# Calculate accuracy of Random Forest model
+acc_rf = accuracy_score(y_test, y_pred_rf)
+print("Accuracy of Random Forest model:", acc_rf)
