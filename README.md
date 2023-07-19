@@ -7,4 +7,4 @@ Paste the code above into the new cell and run the cell.
 
 The program will prompt you to enter the filename of the text file that is attached to the folder. 
 
-Input the data se with Ecommerce comments to classify it into positives and negatives and run to get output. 
+Input the data set of E-commerce comments by replacing the file address to classify it into positives and negatives and run to get output. 
